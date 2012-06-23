@@ -1,0 +1,6 @@
+* 3 robots moviendose sobre un escenario, dos de los cuales tienen un rol pasivo y el tercero es el
+  denominado "seeker".
+
+* El "seeker" puede taggear a otro robot siempre que este se encuentre en un radio menor o igual a un alpha.
+
+* 
