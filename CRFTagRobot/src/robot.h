@@ -16,12 +16,15 @@ public:
 
     //set
     void setRole(QString role);
-    void setDestination(QPointF pos);
+    void setDestination(QPointF pos);    
 
     //get
+    QString getId();
     QString getRole();
     QPointF getPosition();
     QPointF getDestination();
+    void setTagged();
+    bool wasRecentlyTagged();
 
 signals:
     void sendState(Robot* me, RobotState* currentState);
@@ -30,16 +33,22 @@ signals:
 private:
 
     QTimer timer;
+    QTimer accelerate;
+    QTimer waitForTag;
     QString id;
     QString role;
     QPointF previousPosition;
     QPointF currentPosition;
-    QPointF destination;    
+    QPointF destination;
+    int speed;
+    bool recentlyTagged;
 
     void run();
 
 private slots:
     void updatePosition();
+    void updateSpeed();
+    void resume();
 };
 
 #endif // ROBOT_H

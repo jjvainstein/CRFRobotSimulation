@@ -14,9 +14,13 @@ public:
     Stage(QWidget* parent);
     ~Stage(){}
 
-    QFile log;
+    QFile logFile;
+    QTextStream data;
     QGraphicsScene scene;
     QHash<Robot*, QPair<RobotState*, QGraphicsEllipseItem*>* >  robots;    
+    QList<Robot*> robotsAux;
+    Robot* seeker;
+    QTimer saveState;
     int countOfRobots;
     int scenaryWidth;
     int scenaryHeight;
@@ -24,13 +28,14 @@ public:
 private:
     void addRobots();
     void addRobot(QString id, QString role, QPointF pos = QPointF(0, 0));    
-    void saveCurrentState();
     bool isOccupiedPosition(QPointF pos);
     QPointF getAvailablePosition();
+    void checkTagAction();
 
 protected slots:
     void destinationReached(Robot* r);
     void updateState(Robot* r, RobotState* rs);
+    void saveCurrentState();
 
 };
 
