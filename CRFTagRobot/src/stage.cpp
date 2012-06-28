@@ -12,11 +12,19 @@ Stage::Stage(QWidget *parent) : QGraphicsView(parent){
     this->scene.addRect(0, 0,this->scenaryWidth, this->scenaryHeight, QPen(QColor("black")));
     this->setScene(&this->scene);
 
-    this->logFile.setFileName("data.txt");
+    this->logFile.setFileName("data2.txt");
     if (!this->logFile.open(QIODevice::WriteOnly | QIODevice::Text))
         return;
 
     this->data.setDevice(&this->logFile);
+
+    this->testFile.setFileName("test.txt");
+    if (!this->testFile.open(QIODevice::WriteOnly | QIODevice::Text))
+        return;
+
+    this->testData.setDevice(&this->testFile);
+
+
 
     this->saveState.setInterval(100);
     connect(&this->saveState, SIGNAL(timeout()), this, SLOT(saveCurrentState()));
@@ -138,14 +146,20 @@ void Stage::checkTagAction(){
 void Stage::saveCurrentState(){
     QString info = "";
 
+
     info = this->seeker->getId();
 
-    //foreach (Robot* r, this->robots.keys()){
+    //this->testData << this->seeker->getId() + "\n";
+
     foreach (Robot* r, this->robotsAux){
         info = info + "\t" + "[" + QString::number(this->robots[r]->first->getPosition().x()) +  "," + QString::number(this->robots[r]->first->getPosition().y()) + "]" + "\t" + QString::number(robots[r]->first->getSpeed());
+        /*
+        if (r->getId() != "2")
+            info = info + "[" + QString::number(this->robots[r]->first->getPosition().x()) +  "," + QString::number(this->robots[r]->first->getPosition().y()) + "]" + "\t" + QString::number(robots[r]->first->getSpeed()) + "\t";
+        else info = info + "[" + QString::number(this->robots[r]->first->getPosition().x()) +  "," + QString::number(this->robots[r]->first->getPosition().y()) + "]" + "\t" + QString::number(robots[r]->first->getSpeed());
+        */
     }
 
-    //info = info + this->seeker->getId() + "\n";
     info = info + "\n";
     this->data << info;
 }

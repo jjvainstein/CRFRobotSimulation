@@ -16,9 +16,16 @@ public:
 
     QFile logFile;
     QTextStream data;
+
+    QFile testFile;
+    QTextStream testData;
+
     QGraphicsScene scene;
     QHash<Robot*, QPair<RobotState*, QGraphicsEllipseItem*>* >  robots;    
     QList<Robot*> robotsAux;
+
+    QList<Robot*> robotsPrev;
+
     Robot* seeker;
     QTimer saveState;
     int countOfRobots;
