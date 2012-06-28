@@ -24,7 +24,7 @@ public:
     QHash<Robot*, QPair<RobotState*, QGraphicsEllipseItem*>* >  robots;    
     QList<Robot*> robotsAux;
 
-    QList<Robot*> robotsPrev;
+    QHash<Robot*, RobotState*> previousState;
 
     Robot* seeker;
     QTimer saveState;

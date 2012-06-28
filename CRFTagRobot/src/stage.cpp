@@ -12,21 +12,21 @@ Stage::Stage(QWidget *parent) : QGraphicsView(parent){
     this->scene.addRect(0, 0,this->scenaryWidth, this->scenaryHeight, QPen(QColor("black")));
     this->setScene(&this->scene);
 
-    this->logFile.setFileName("data2.txt");
+    this->logFile.setFileName("testData.txt");
     if (!this->logFile.open(QIODevice::WriteOnly | QIODevice::Text))
         return;
 
     this->data.setDevice(&this->logFile);
 
-    this->testFile.setFileName("test.txt");
+
+    this->testFile.setFileName("labelData.txt");
     if (!this->testFile.open(QIODevice::WriteOnly | QIODevice::Text))
         return;
 
     this->testData.setDevice(&this->testFile);
 
 
-
-    this->saveState.setInterval(100);
+    this->saveState.setInterval(17);
     connect(&this->saveState, SIGNAL(timeout()), this, SLOT(saveCurrentState()));
 
     this->countOfRobots = 3;
@@ -64,6 +64,9 @@ void Stage::addRobot(QString id, QString role, QPointF pos){
     r->setDestination(getAvailablePosition());
     this->robots[r] = new QPair<RobotState*, QGraphicsEllipseItem*> (rs, body);
 
+    //PreviousState
+    this->previousState[r] = new RobotState(pos, 0);
+
     connect(r, SIGNAL(arrived(Robot*)), this, SLOT(destinationReached(Robot*)));
     connect(r, SIGNAL(sendState(Robot*,RobotState*)), this, SLOT(updateState(Robot*, RobotState*)));
 
@@ -96,9 +99,16 @@ bool Stage::isOccupiedPosition(QPointF pos){
 void Stage::updateState(Robot* r, RobotState *rs){
 
     this->scene.removeItem(this->robots[r]->second);
-    delete this->robots[r]->first;
+
+    //delete this->robots[r]->first;
+    //delete this->robots[r]->second;
+    //delete this->robots[r];
+
+    delete this->previousState[r];
     delete this->robots[r]->second;
+    this->previousState[r] = this->robots[r]->first;
     delete this->robots[r];
+
 
     checkTagAction();
 
@@ -146,20 +156,45 @@ void Stage::checkTagAction(){
 void Stage::saveCurrentState(){
     QString info = "";
 
+    //info = this->seeker->getId();
 
-    info = this->seeker->getId();
-
-    //this->testData << this->seeker->getId() + "\n";
-
-    foreach (Robot* r, this->robotsAux){
-        info = info + "\t" + "[" + QString::number(this->robots[r]->first->getPosition().x()) +  "," + QString::number(this->robots[r]->first->getPosition().y()) + "]" + "\t" + QString::number(robots[r]->first->getSpeed());
+    foreach (Robot* r, this->robotsAux){        
+        /*[Training]Los datos contienen la posición anterior, la actual, la velocidad anterior y la velocidad actual*/
         /*
-        if (r->getId() != "2")
-            info = info + "[" + QString::number(this->robots[r]->first->getPosition().x()) +  "," + QString::number(this->robots[r]->first->getPosition().y()) + "]" + "\t" + QString::number(robots[r]->first->getSpeed()) + "\t";
-        else info = info + "[" + QString::number(this->robots[r]->first->getPosition().x()) +  "," + QString::number(this->robots[r]->first->getPosition().y()) + "]" + "\t" + QString::number(robots[r]->first->getSpeed());
+        info = info + "\t" + "pos[0]=(" + QString::number(this->robots[r]->first->getPosition().x()) +  "," + QString::number(this->robots[r]->first->getPosition().y()) + ")" +
+                      "\t" + "pos[-1]=(" + QString::number(this->previousState[r]->getPosition().x()) +  "," + QString::number(this->previousState[r]->getPosition().y()) + ")" +
+                      "\t" + "speed[0]=" + QString::number(this->robots[r]->first->getSpeed()) + "\t" + "speed[-1]=" + QString::number(this->previousState[r]->getSpeed());
+
+       */
+
+       /*[Training] Los datos contienen la velocidad anterior y la actual*/
+       /*
+       info = info + "\t" + "speed[0]=" + QString::number(this->robots[r]->first->getSpeed()) + "\t" + "speed[-1]=" + QString::number(this->previousState[r]->getSpeed());
+
+       /*
+
+       /*[Test]Los datos contienen la posición anterior, la actual, la velocidad anterior y la velocidad actual*/
+       /*
+       if (r->getId() != "2")
+            info = info + "pos[0]=(" + QString::number(this->robots[r]->first->getPosition().x()) +  "," + QString::number(this->robots[r]->first->getPosition().y()) + ")" +
+                    "\t" + "pos[-1]=(" + QString::number(this->previousState[r]->getPosition().x()) +  "," + QString::number(this->previousState[r]->getPosition().y()) + ")" +
+                    "\t" + "speed[0]=" + QString::number(this->robots[r]->first->getSpeed()) + "\t" + "speed[-1]=" + QString::number(this->previousState[r]->getSpeed()) + "\t";
+
+        else info = info + "pos[0]=(" + QString::number(this->robots[r]->first->getPosition().x()) +  "," + QString::number(this->robots[r]->first->getPosition().y()) + ")" +
+               "\t" + "pos[-1]=(" + QString::number(this->previousState[r]->getPosition().x()) +  "," + QString::number(this->previousState[r]->getPosition().y()) + ")" +
+               "\t" + "speed[0]=" + QString::number(this->robots[r]->first->getSpeed()) + "\t" + "speed[-1]=" + QString::number(this->previousState[r]->getSpeed());
+
         */
+
+        /*[Test]Los datos contienen la velocidad anterior y la velocidad actual*/
+        if (r->getId() != "2")
+             info = info + "speed[0]=" + QString::number(this->robots[r]->first->getSpeed()) + "\t" + "speed[-1]=" + QString::number(this->previousState[r]->getSpeed()) + "\t";
+
+         else info = info + "speed[0]=" + QString::number(this->robots[r]->first->getSpeed()) + "\t" + "speed[-1]=" + QString::number(this->previousState[r]->getSpeed());
+
     }
 
     info = info + "\n";
     this->data << info;
+    this->testData << this->seeker->getId() + "\n";
 }
