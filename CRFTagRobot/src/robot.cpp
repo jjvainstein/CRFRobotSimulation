@@ -4,7 +4,7 @@ Robot::Robot(QString id, QString role, QPointF initPos) : QThread() {
     this->id = id;
     this->role = role;
     this->currentPosition = initPos;
-    this->speed = 750;
+    this->speed = 500;
 }
 
 void Robot::setRole(QString role){
@@ -36,7 +36,7 @@ void Robot::run(){
     this->timer.setInterval(this->speed);
     connect(&this->timer, SIGNAL(timeout()), this, SLOT(updatePosition()));
 
-    this->accelerate.setInterval(1500);
+    this->accelerate.setInterval(500);
     connect(&this->accelerate, SIGNAL(timeout()), this, SLOT(updateSpeed()));
 
     this->waitForTag.setInterval(5000);
@@ -70,7 +70,7 @@ void Robot::updatePosition(){
 }
 
 void Robot::updateSpeed(){
-    this->speed = (this->speed - 50 <= 10) ? 10 : this->speed - 50;
+    this->speed = (this->speed - 25 <= 17) ? 17 : this->speed - 25;
     this->timer.setInterval(this->speed);
     this->timer.start();
 }
@@ -78,7 +78,7 @@ void Robot::updateSpeed(){
 void Robot::setTagged(){
     this->recentlyTagged = true;
     this->role = "seeker";
-    this->speed = 750;
+    this->speed = 500;
     /*this->speed = 10;
     disconnect(&this->timer, SIGNAL(timeout()), this, SLOT(updatePosition()));
     disconnect(&this->accelerate, SIGNAL(timeout()), this, SLOT(updateSpeed()));

@@ -17,20 +17,29 @@ public:
     QFile logFile;
     QTextStream data;
 
-    QFile testFile;
-    QTextStream testData;
+    QFile file2;
+    QTextStream streamFile2;
+
+    QFile file3;
+    QTextStream streamFile3;
+
+    QFile file4;
+    QTextStream streamFile4;
+
 
     QGraphicsScene scene;
     QHash<Robot*, QPair<RobotState*, QGraphicsEllipseItem*>* >  robots;    
     QList<Robot*> robotsAux;
 
-    QHash<Robot*, RobotState*> previousState;
+    //QHash<Robot*, RobotState*> previousState;
+    QHash<Robot*, QList<RobotState*>* > previousStates;
 
     Robot* seeker;
     QTimer saveState;
     int countOfRobots;
     int scenaryWidth;
     int scenaryHeight;
+    bool testing;
 
 private:
     void addRobots();
@@ -38,6 +47,10 @@ private:
     bool isOccupiedPosition(QPointF pos);
     QPointF getAvailablePosition();
     void checkTagAction();
+    QPointF restaVectores(QPointF v1, QPointF v2);
+    double modulo(QPointF v);
+    Robot* closestNeighbor(Robot* r);
+    double distance(QPointF v1, QPointF v2);
 
 protected slots:
     void destinationReached(Robot* r);

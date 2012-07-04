@@ -12,10 +12,6 @@ public:
 
     QPointF position;
     double  speed;
-    bool    velocityThreshold;
-    double  chasing;
-    double  distance;
-    bool    distanceThreshold;
 
     QPointF getPosition();
     double  getSpeed();

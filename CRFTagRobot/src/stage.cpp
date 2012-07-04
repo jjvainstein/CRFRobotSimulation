@@ -12,18 +12,37 @@ Stage::Stage(QWidget *parent) : QGraphicsView(parent){
     this->scene.addRect(0, 0,this->scenaryWidth, this->scenaryHeight, QPen(QColor("black")));
     this->setScene(&this->scene);
 
-    this->logFile.setFileName("testData.txt");
+    this->testing = true;
+
+    if (testing){
+         this->logFile.setFileName("test-7.txt");
+         this->file2.setFileName("test2-7.txt");
+         this->file3.setFileName("test3-7.txt");
+         this->file4.setFileName("test4-7.txt");
+    }
+    else {
+        this->logFile.setFileName("train.txt");
+        this->file2.setFileName("train2.txt");
+        this->file3.setFileName("train3.txt");
+        this->file4.setFileName("train4.txt");
+    }
+
     if (!this->logFile.open(QIODevice::WriteOnly | QIODevice::Text))
         return;
-
     this->data.setDevice(&this->logFile);
 
-
-    this->testFile.setFileName("labelData.txt");
-    if (!this->testFile.open(QIODevice::WriteOnly | QIODevice::Text))
+    if (!this->file2.open(QIODevice::WriteOnly | QIODevice::Text))
         return;
+    this->streamFile2.setDevice(&this->file2);
 
-    this->testData.setDevice(&this->testFile);
+
+    if (!this->file3.open(QIODevice::WriteOnly | QIODevice::Text))
+        return;
+    this->streamFile3.setDevice(&this->file3);
+
+    if (!this->file4.open(QIODevice::WriteOnly | QIODevice::Text))
+        return;
+    this->streamFile4.setDevice(&this->file4);
 
 
     this->saveState.setInterval(17);
@@ -65,7 +84,12 @@ void Stage::addRobot(QString id, QString role, QPointF pos){
     this->robots[r] = new QPair<RobotState*, QGraphicsEllipseItem*> (rs, body);
 
     //PreviousState
-    this->previousState[r] = new RobotState(pos, 0);
+    //this->previousState[r] = new RobotState(pos, 0);
+    this->previousStates[r] = new QList<RobotState*>();
+    this->previousStates[r]->append(new RobotState(pos, 0));//t_2
+    this->previousStates[r]->append(new RobotState(pos, 0));//t_1
+
+
 
     connect(r, SIGNAL(arrived(Robot*)), this, SLOT(destinationReached(Robot*)));
     connect(r, SIGNAL(sendState(Robot*,RobotState*)), this, SLOT(updateState(Robot*, RobotState*)));
@@ -100,13 +124,15 @@ void Stage::updateState(Robot* r, RobotState *rs){
 
     this->scene.removeItem(this->robots[r]->second);
 
-    //delete this->robots[r]->first;
-    //delete this->robots[r]->second;
-    //delete this->robots[r];
-
-    delete this->previousState[r];
+    /*delete this->previousState[r];
     delete this->robots[r]->second;
     this->previousState[r] = this->robots[r]->first;
+    delete this->robots[r];*/
+
+    delete this->previousStates[r]->at(0);
+    this->previousStates[r]->removeAt(0); //borro state del tiempo t-2
+    delete this->robots[r]->second; //boroo el state inmediato actual (antes de actualizar)
+    this->previousStates[r]->append(this->robots[r]->first); //guardo el puntero para que se convierta en el estado en t-1
     delete this->robots[r];
 
 
@@ -154,47 +180,150 @@ void Stage::checkTagAction(){
 }
 
 void Stage::saveCurrentState(){
-    QString info = "";
+    QString item = "";
+    QString item2 = "";
+    QString item3 = "";
+    QString item4 = "";
 
-    //info = this->seeker->getId();
+    RobotState* cs;//current state
+    //RobotState* ps;//previous state
+    RobotState* pst_1;//previous state t-1
+    RobotState* pst_2;//previous state t-2
 
-    foreach (Robot* r, this->robotsAux){        
-        /*[Training]Los datos contienen la posición anterior, la actual, la velocidad anterior y la velocidad actual*/
-        /*
-        info = info + "\t" + "pos[0]=(" + QString::number(this->robots[r]->first->getPosition().x()) +  "," + QString::number(this->robots[r]->first->getPosition().y()) + ")" +
-                      "\t" + "pos[-1]=(" + QString::number(this->previousState[r]->getPosition().x()) +  "," + QString::number(this->previousState[r]->getPosition().y()) + ")" +
-                      "\t" + "speed[0]=" + QString::number(this->robots[r]->first->getSpeed()) + "\t" + "speed[-1]=" + QString::number(this->previousState[r]->getSpeed());
+    //Para el calculo del atributo chasing
+    /*Robot* cn; //Closest Neighbor
+    QPointF rv; //Resta Vectores
+    QPointF rv2; //Resta Vectores
+    double aux; //Para las divisiones*/
 
-       */
+    //Para el calculo del atributo distance threshold
+    int countRobot = 1;
+    double distanceThreshold = 25;
+    double distanceThreshold2 = 50;
+    QString attrDist = "";
+    QString attrDist1;
+    QString attrDist2;
+    QString attrDist_2 = "";
+    QString attrDist1_2;
+    QString attrDist2_2;
 
-       /*[Training] Los datos contienen la velocidad anterior y la actual*/
-       /*
-       info = info + "\t" + "speed[0]=" + QString::number(this->robots[r]->first->getSpeed()) + "\t" + "speed[-1]=" + QString::number(this->previousState[r]->getSpeed());
+    //QString v;
 
-       /*
+    item = "r" + this->seeker->getId();
+    item2 = "r" + this->seeker->getId();
+    item3 = "r" + this->seeker->getId();
+    item4 = "r" + this->seeker->getId();
 
-       /*[Test]Los datos contienen la posición anterior, la actual, la velocidad anterior y la velocidad actual*/
-       /*
-       if (r->getId() != "2")
-            info = info + "pos[0]=(" + QString::number(this->robots[r]->first->getPosition().x()) +  "," + QString::number(this->robots[r]->first->getPosition().y()) + ")" +
-                    "\t" + "pos[-1]=(" + QString::number(this->previousState[r]->getPosition().x()) +  "," + QString::number(this->previousState[r]->getPosition().y()) + ")" +
-                    "\t" + "speed[0]=" + QString::number(this->robots[r]->first->getSpeed()) + "\t" + "speed[-1]=" + QString::number(this->previousState[r]->getSpeed()) + "\t";
+    foreach (Robot* r, this->robotsAux){
+        //ps = this->previousState[r];
+        cs = this->robots[r]->first;
 
-        else info = info + "pos[0]=(" + QString::number(this->robots[r]->first->getPosition().x()) +  "," + QString::number(this->robots[r]->first->getPosition().y()) + ")" +
-               "\t" + "pos[-1]=(" + QString::number(this->previousState[r]->getPosition().x()) +  "," + QString::number(this->previousState[r]->getPosition().y()) + ")" +
-               "\t" + "speed[0]=" + QString::number(this->robots[r]->first->getSpeed()) + "\t" + "speed[-1]=" + QString::number(this->previousState[r]->getSpeed());
+        pst_2 = this->previousStates[r]->at(0);
+        pst_1 = this->previousStates[r]->at(1);
 
-        */
+        //v = (r->getId() == this->seeker->getId()) ? "1" : "0";
 
-        /*[Test]Los datos contienen la velocidad anterior y la velocidad actual*/
-        if (r->getId() != "2")
-             info = info + "speed[0]=" + QString::number(this->robots[r]->first->getSpeed()) + "\t" + "speed[-1]=" + QString::number(this->previousState[r]->getSpeed()) + "\t";
+        /*---------------NO ANDUVO COMO LA GENTE!!!!------------------------*/
+                        /*[Training]Los datos contienen la posición anterior, la actual, la velocidad anterior y la velocidad actual*/
+                        /*
+                        info = info + "\t" + "pos[0]=(" + QString::number(this->robots[r]->first->getPosition().x()) +  "," + QString::number(this->robots[r]->first->getPosition().y()) + ")" +
+                                      "\t" + "pos[-1]=(" + QString::number(this->previousState[r]->getPosition().x()) +  "," + QString::number(this->previousState[r]->getPosition().y()) + ")" +
+                                      "\t" + "speed[0]=" + QString::number(this->robots[r]->first->getSpeed()) + "\t" + "speed[-1]=" + QString::number(this->previousState[r]->getSpeed());
+                       */
 
-         else info = info + "speed[0]=" + QString::number(this->robots[r]->first->getSpeed()) + "\t" + "speed[-1]=" + QString::number(this->previousState[r]->getSpeed());
+                        /*[Training]Los datos contienen la posición anterior, la actual, la velocidad anterior,la velocidad actual,
+                                    threshold anterior y actual, y un atributo stopping
+                        */
+                        /*
+                        item = item + "\t" + "pos[-1]=(" + QString::number(ps->getPosition().x()) +  "," + QString::number(ps->getPosition().y()) + ")" + "\t" + "pos[0]=(" + QString::number(cs->getPosition().x()) +  "," + QString::number(cs->getPosition().y()) + ")" +
+                                      "\t" + "speed[-1]=" + QString::number(ps->getSpeed()) + "\t" + "speed[0]=" + QString::number(cs->getSpeed()) + "\t" + "threshold[-1]=" + QString::number(ps->getSpeed() < 0.020) + "\t" + "threshold[0]=" + QString::number(cs->getSpeed() < 0.020) + "\t" + "stopping=" + QString::number((cs->getSpeed() - ps->getSpeed()<=0));
+                        */
 
+                        /*
+                        item = item + this->seeker->getId() + "\t" + "pos[-1]=(" + QString::number(ps->getPosition().x()) +  "," + QString::number(ps->getPosition().y()) + ")" + "\t" + "pos[0]=(" + QString::number(cs->getPosition().x()) +  "," + QString::number(cs->getPosition().y()) + ")" +
+                                      "\t" + "speed[-1]=" + QString::number(ps->getSpeed()) + "\t" + "speed[0]=" + QString::number(cs->getSpeed()) + "\t" + "threshold[-1]=" + QString::number(ps->getSpeed() < 0.020) + "\t" + "threshold[0]=" + QString::number(cs->getSpeed() < 0.020) + "\t" + "stopping=" + QString::number((cs->getSpeed() - ps->getSpeed()<=0)) + "\n";
+
+                        item2 = item2 + this->seeker->getId() + "\t" + "speed[-1]=" + QString::number(ps->getSpeed()) + "\t" + "speed[0]=" + QString::number(cs->getSpeed()) + "\t" + "threshold[-1]=" + QString::number(ps->getSpeed() < 0.020) + "\t" + "threshold[0]=" + QString::number(cs->getSpeed() < 0.020) + "\t" + "stopping=" + QString::number((cs->getSpeed() - ps->getSpeed()<=0)) + "\n";
+                        */
+        /*-------------------------------------------------------------------*/
+
+        /* SeekerID r0_pos=[x,y] r0_speedThreshold= r0_stopping= r1_pos.......*/
+            /*    item = item + "\t" + "r" + r->getId() + "_pos=[" + QString::number(cs->getPosition().x()) +  "," + QString::number(cs->getPosition().y()) + "]:" + v +
+                              "\t" + "r" + r->getId() + "_speedTheshold=" + QString::number(cs->getSpeed() < 0.020) + ":" + v + "\t" + "r" + r->getId() + "_stopping=" + QString::number((cs->getSpeed() - ps->getSpeed() < 0)) + ":" + v;
+            */
+
+        /* SeekerID r0_pos=[x,y] r0_speedThreshold= r0_stopping= r1_pos....... Dejando un espacio entre cada tiempo t*/
+            /*  item2 = item2 + "\t" + "r" + r->getId() + "_pos=[" + QString::number(cs->getPosition().x()) +  "," + QString::number(cs->getPosition().y()) + "]" +
+                          "\t" + "r" + r->getId() + "_speedTheshold=" + QString::number(cs->getSpeed() < 0.020) + "\t" + "r" + r->getId() + "_stopping=" + QString::number((cs->getSpeed() - ps->getSpeed() < 0));
+            */
+
+        /* chasing*/
+        /*cn = closestNeighbor(r);
+        rv = restaVectores(cn->getPosition(), cs->getPosition());
+        aux = 1 / modulo(rv);
+        rv.setX(rv.x() * aux);
+        rv.setY(rv.y() * aux);
+        aux = 1 / cs->getSpeed();
+        rv.setX(rv.x() * aux);
+        rv.setY(rv.y() * aux);*/
+
+        attrDist1 = ((distance(cs->getPosition(), this->robots[this->robotsAux[countRobot % this->countOfRobots]]->first->getPosition()) <= distanceThreshold ||
+                distance(pst_1->getPosition(), this->previousStates[this->robotsAux[countRobot % this->countOfRobots]]->at(1)->getPosition()) <= distanceThreshold) &&
+                distance(pst_2->getPosition(), this->previousStates[this->robotsAux[countRobot % this->countOfRobots]]->at(0)->getPosition()) <= distanceThreshold) ? "1" : "0";
+
+        attrDist = attrDist + "\t" + "dist1(r" + r->getId() + ",r" + this->robotsAux[countRobot % this->countOfRobots]->getId() + ")= " + attrDist1;
+
+        attrDist2 = (distance(cs->getPosition(), this->robots[this->robotsAux[countRobot % this->countOfRobots]]->first->getPosition()) > distanceThreshold &&
+                     distance(pst_1->getPosition(), this->previousStates[this->robotsAux[countRobot % this->countOfRobots]]->at(1)->getPosition()) > distanceThreshold) ? "1" : "0";
+
+        attrDist = attrDist + "\t" + "dist2(r" + r->getId() + ",r" + this->robotsAux[countRobot % this->countOfRobots]->getId() + ")= " + attrDist2;
+
+
+        attrDist1_2 = ((distance(cs->getPosition(), this->robots[this->robotsAux[countRobot % this->countOfRobots]]->first->getPosition()) <= distanceThreshold2 ||
+                distance(pst_1->getPosition(), this->previousStates[this->robotsAux[countRobot % this->countOfRobots]]->at(1)->getPosition()) <= distanceThreshold2) &&
+                distance(pst_2->getPosition(), this->previousStates[this->robotsAux[countRobot % this->countOfRobots]]->at(0)->getPosition()) <= distanceThreshold2) ? "1" : "0";
+
+        attrDist_2 = attrDist_2 + "\t" + "dist1(r" + r->getId() + ",r" + this->robotsAux[countRobot % this->countOfRobots]->getId() + ")= " + attrDist1;
+
+        attrDist2_2 = (distance(cs->getPosition(), this->robots[this->robotsAux[countRobot % this->countOfRobots]]->first->getPosition()) > distanceThreshold2 &&
+                     distance(pst_1->getPosition(), this->previousStates[this->robotsAux[countRobot % this->countOfRobots]]->at(1)->getPosition()) > distanceThreshold2) ? "1" : "0";
+
+        attrDist_2 = attrDist_2 + "\t" + "dist2(r" + r->getId() + ",r" + this->robotsAux[countRobot % this->countOfRobots]->getId() + ")= " + attrDist2;
+
+
+        countRobot++;
+
+
+
+        item = item + "\t" + "r" + r->getId() + "_pos=[" + QString::number(cs->getPosition().x()) +  "," + QString::number(cs->getPosition().y()) + "]" +
+                      "\t" + "r" + r->getId() + "_speedTheshold=" + QString::number(cs->getSpeed() < 0.020) + "\t" + "r" + r->getId() + "_stopping=" + QString::number((cs->getSpeed() - pst_1->getSpeed() < 0));
+
+
+        //item2 = item2 + "\t" + "r" + r->getId() + "_pos=[" + QString::number(cs->getPosition().x()) +  "," + QString::number(cs->getPosition().y()) + "]" +
+         //               "\t" + "r" + r->getId() + "_speedTheshold=" + QString::number(cs->getSpeed() < 0.020) + "\t" + "r" + r->getId() + "_stopping=" + QString::number((cs->getSpeed() - pst_1->getSpeed() < 0));
     }
 
-    info = info + "\n";
-    this->data << info;
-    this->testData << this->seeker->getId() + "\n";
+
+
+
+    //item = item + attrDist + "\n";
+    //this->data << item;
+    this->data << item + attrDist + "\n";
+
+    this->streamFile2 << item + attrDist_2 + "\n";
+
+    this->streamFile3 << item + attrDist + "\n\n";
+    this->streamFile4 << item + attrDist_2 + "\n\n";
+}
+
+QPointF Stage::restaVectores(QPointF v1, QPointF v2){
+    return QPointF(v1.x() - v2.x(), v1.y() - v2.y());
+}
+
+double Stage::modulo(QPointF v){
+    sqrt(pow(v.x(), 2) + pow(v.y(), 2));
+}
+
+double Stage::distance(QPointF v1, QPointF v2){
+    return sqrt(pow(v1.x() - v2.x(), 2) + pow(v1.y() - v2.y(), 2));
 }
